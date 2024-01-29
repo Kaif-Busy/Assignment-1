@@ -15,7 +15,7 @@ type result struct { // struct that contains the slice of keyValue to store full
 	kv []keyValue
 }
 
-func PopulateStruct(m map[string]interface{}, x interface{}) {
+func PopulateStruct(m map[string]interface{}, x interface{}, dp *map[keyValue]bool) {
 	rs := x.(*result) // Type assertion to get the result pointer
 
 	_, ok1 := m["name"] // checking if the given keys exist
@@ -32,12 +32,17 @@ func PopulateStruct(m map[string]interface{}, x interface{}) {
 			a.course = m["course"].(string)
 		}
 
+		if _, ok := (*dp)[a]; ok { // if structure already explored then return
+			return
+		}
+
 		rs.kv = append(rs.kv, a) // update the slice
+		(*dp)[a] = true          // update the dp map value
 	}
 	for _, y := range m { // iterate to find if there are any sub-maps in the given map
 
 		if reflect.TypeOf(y).Kind() == reflect.Map {
-			PopulateStruct(y.(map[string]interface{}), x) // if yes recursive call is made to the sub-graph
+			PopulateStruct(y.(map[string]interface{}), x, dp) // if yes recursive call is made to the sub-graph
 
 		}
 
@@ -74,7 +79,7 @@ func RemoveKey(key string, source map[string]interface{}) bool {
 			if reflect.TypeOf(y).Kind() == reflect.Map {
 				ans = ans || RemoveKey(key, y.(map[string]interface{})) // recursive call to perform deletion on the sub map
 
-			}	// OR is used because if a later recurssive call returns false, the ans is not overwritten. If we don't have duplicate keys
+			} // OR is used because if a later recurssive call returns false, the ans is not overwritten. If we don't have duplicate keys
 			// we can add a condition and return here only
 
 		}
@@ -84,18 +89,23 @@ func RemoveKey(key string, source map[string]interface{}) bool {
 
 func main() {
 
-	foods := map[string]interface{}{	// example input
+	foods := map[string]interface{}{ // example input
 		"Food": "delicious",
 		"eggs": map[string]interface{}{
 			"greeting": "Hello",
 			"name":     "Kaif",
 			"course":   "MCA",
+			"eggs": map[string]interface{}{
+				"greeting": "Hello",
+				"name":     "Kaif",
+				"course":   "MCA",
+			},
 		},
 		"name":   "Soransh",
 		"course": "BTech",
 	}
 
-	x := setKeyValue("Food", "Very Delicious", foods)// call to setKeyValue
+	x := setKeyValue("Food", "Very Delicious", foods) // call to setKeyValue
 
 	if x {
 		fmt.Println("Changed")
@@ -118,7 +128,9 @@ func main() {
 
 	var r result
 
-	PopulateStruct(foods, &r)	//call to populate struct
+	dp := make(map[keyValue]bool) // variable to perform memoization
+
+	PopulateStruct(foods, &r, &dp) //call to populate struct
 
 	fmt.Println(r)
 

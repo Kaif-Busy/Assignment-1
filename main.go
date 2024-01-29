@@ -6,10 +6,6 @@ import (
 	"reflect"
 )
 
-
-
-
-
 func setKeyValue(key string, value interface{}, source map[string]interface{}) bool {
 
 	var ans bool
@@ -29,7 +25,23 @@ func setKeyValue(key string, value interface{}, source map[string]interface{}) b
 	return ans
 }
 
+func RemoveKey(key string, source map[string]interface{}) bool {
+	var ans bool
+	if _, ok := source[key]; ok {
+		delete(source, key)
+		return true
+	} else {
+		for _, y := range source {
 
+			if reflect.TypeOf(y).Kind() == reflect.Map {
+				ans = RemoveKey(key, y.(map[string]interface{}))
+
+			}
+
+		}
+	}
+	return ans
+}
 
 func main() {
 
@@ -44,19 +56,25 @@ func main() {
 		"course": "BTech",
 	}
 
-	
-
 	x := setKeyValue("Food", "Very Delicious", foods)
-	
+
 	if x {
 		fmt.Println("Changed")
 	} else {
 		fmt.Println("Not Found")
+
 	}
-	
 
 	fmt.Println(foods)
 
-	
+	y := RemoveKey("greeting", foods)
+
+	if y {
+		fmt.Println("Deleted")
+	} else {
+		fmt.Println("Not Found")
+	}
+
+	fmt.Println(foods)
 
 }
